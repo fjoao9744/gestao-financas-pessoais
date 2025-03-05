@@ -1,8 +1,8 @@
 from models import Conta, engine, Bancos, Status, Historico, Tipos
 from sqlmodel import Session, select
-from datetime import date
+from datetime import date, timedelta
 
-def criar_conta(conta: Conta, engine):
+def criar_conta(conta: Conta):
     with Session(engine) as session:
         statement = select(Conta).where(Conta.banco == conta.banco)
         results = session.exec(statement).all()
@@ -92,12 +92,48 @@ def total_contas():
             total += conta.valor
             
         return float(total)
+    
+def buscar_historicos_entre_datas(data_inicio: date, data_fim: date):
+    with Session(engine) as session:
+        statement = select(Historico).where(
+            Historico.data >= data_inicio,
+            Historico.data <= data_fim
+        )
+        resultados = session.exec(statement).all()
+        
+        return resultados
 
-conta = Conta(valor=10, banco=Bancos.INTER) # type:ignore
-criar_conta(conta, engine)
+# testando as funções
 
-print(listar_contas())
+# conta = Conta(valor=10, banco=Bancos.INTER) # type:ignore
+# criar_conta(conta, engine)
 
-# transferir_saldo(1, 2, 2)
+# print(listar_contas())
 
-print(total_contas())
+# # transferir_saldo(1, 2, 2)
+
+# # h = Historico(conta_id=1, tipo=Tipos.ENTRADA, valor=2, data=date.today())
+# # movimentar_dinheiro(h)
+
+# # print(total_contas())
+# x = buscar_historicos_entre_datas(
+#     date.today() - timedelta(days=1), # dia de ontem
+#     date.today() + timedelta(days=1)) # dia de amanhã
+
+# print(x)
+
+
+def criar_grafico_por_conta():
+    with Session(engine) as session:
+        statement = select(Conta).where(Conta.status == Status.ATIVO)
+        contas = session.exec(statement).all()
+        
+        bancos = [conta.banco.value for conta in contas]
+        total = [conta.valor for conta in contas]
+        
+        import matplotlib.pyplot as plt
+        
+        plt.bar(bancos, total)
+        plt.show()
+        
+# criar_grafico_por_conta()
